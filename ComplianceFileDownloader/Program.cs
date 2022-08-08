@@ -11,6 +11,9 @@ var connectionString = ConfigurationSettings.AppSettings.Get("connectionString")
 //await exampleDownloader.Execute();
 //var covidDownloader = new CovidDownloader(baseUrl, userName, password, connectionString);
 
-var blsDownloader = new BlsDownloader(baseUrl, userName, password, connectionString);
-await blsDownloader.Execute();
+//var blsDownloader = new BlsDownloader(baseUrl, userName, password, connectionString);
+//await blsDownloader.Execute();
+
+var aclsDownloader = new AclsDownloader(baseUrl, userName, password, connectionString);
+await aclsDownloader.Execute();
 

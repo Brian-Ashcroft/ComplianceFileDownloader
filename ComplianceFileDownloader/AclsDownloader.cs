@@ -26,9 +26,9 @@ namespace ComplianceFileDownloader
             var csv = new StringBuilder();
             csv.AppendLine("DocumentTypeId, CandidateDocumentId, DocumentId, Status, Reason, FirstName, LastName, ExpirationDate");
 
-            var blsId = 14;
+            var aclsId = 13;
             var queries = new List<string>();
-            queries.Add(@"SELECT distinct top 1000
+            queries.Add(@"SELECT distinct top 765
                             r.CandidateDocumentId
                             ,DocumentTypeId
                             ,d.Id DocumentId
@@ -47,7 +47,7 @@ namespace ComplianceFileDownloader
                             AND ValidationStatusId = 2
                             order by r.id desc");
 
-            queries.Add(@"SELECT distinct TOP 25 
+            queries.Add(@"SELECT distinct TOP 125 
                             r.CandidateDocumentId
                             ,r.DocumentTypeId
                             ,d.Id DocumentId
@@ -66,7 +66,7 @@ namespace ComplianceFileDownloader
                             WHERE r.DocumentTypeId = @documentTypeId
                             ORDER BY rdn.Id desc");
 
-            queries.Add(@"SELECT distinct TOP 25 
+            queries.Add(@"SELECT distinct TOP 139 
                             cd.Id CandidateDocumentId
                             ,crp.DocumentTypeId
                             ,d.Id DocumentId
@@ -88,17 +88,17 @@ namespace ComplianceFileDownloader
                             ORDER BY cdn.Id desc");
 
             using var connection = new SqlConnection(connectionString);
-            var parameters = new { DocumentTypeId = blsId };
+            var parameters = new { DocumentTypeId = aclsId };
             foreach (var sql in queries)
             {
-                var query = await connection.QueryAsync<BlsDoc>(sql, parameters);
+                var query = await connection.QueryAsync<AclsDoc>(sql, parameters);
                 var documents = query.ToList();
                 var token = await HttpRequestFactory.GetApiToken(userName, password, tokenUrl);
                 foreach (var document in documents)
                 {
-                    if (File.Exists($"bls_docs/{document.DocumentId}.pdf"))
+                    if (File.Exists($"acls_docs/{document.DocumentId}.pdf"))
                     {
-                        csv.AppendLine($"{document.DocumentTypeId}, {document.CandidateDocumentId}, {document.DocumentId}, {document.Status}, {Sanitze(document.Reason)}, {document.FirstName}, {document.LastName}, {document.ExpirationDate}");
+                        csv.AppendLine($"{document.DocumentTypeId}, {document.CandidateDocumentId}, {document.DocumentId}, {document.Status}, {Sanitze(document.Reason)}, {document.FirstName}, {document.LastName}, {document.ExpirationDate}, DUP");
                         continue;
                     }
                     try
@@ -111,8 +111,8 @@ namespace ComplianceFileDownloader
                         if (docResult.IsSuccessStatusCode)
                         {
                             csv.AppendLine($"{document.DocumentTypeId}, {document.CandidateDocumentId}, {document.DocumentId}, {document.Status}, {Sanitze(document.Reason)}, {document.FirstName}, {document.LastName}, {document.ExpirationDate}");
-                            Directory.CreateDirectory("bls_docs");
-                            using var fs = new FileStream($"bls_docs/{document.DocumentId}.pdf", FileMode.Create, FileAccess.Write, FileShare.None);
+                            Directory.CreateDirectory("acls_docs");
+                            using var fs = new FileStream($"acls_docs/{document.DocumentId}.pdf", FileMode.Create, FileAccess.Write, FileShare.None);
                             await docResult.Content.CopyToAsync(fs);
                         }
                         else
@@ -126,7 +126,7 @@ namespace ComplianceFileDownloader
                     }
                 }
             }
-            File.WriteAllText("bls_docs.csv", csv.ToString());
+            File.WriteAllText("acls_docs.csv", csv.ToString());
         }
 
         public string Sanitze(string s)
