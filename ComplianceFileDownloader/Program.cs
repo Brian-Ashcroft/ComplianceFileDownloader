@@ -14,6 +14,9 @@ var connectionString = ConfigurationSettings.AppSettings.Get("connectionString")
 //var blsDownloader = new BlsDownloader(baseUrl, userName, password, connectionString);
 //await blsDownloader.Execute();
 
-var aclsDownloader = new AclsDownloader(baseUrl, userName, password, connectionString);
-await aclsDownloader.Execute();
+//var aclsDownloader = new AclsDownloader(baseUrl, userName, password, connectionString);
+//await aclsDownloader.Execute();
+
+var rubellaDownloader = new RubellaDownloader(baseUrl, userName, password, connectionString);
+await rubellaDownloader.Execute();
 
