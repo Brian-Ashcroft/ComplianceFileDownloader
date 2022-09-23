@@ -3,7 +3,7 @@ using Dapper;
 using System.Data.SqlClient;
 using System.Text;
 
-namespace ComplianceFileDownloader;
+namespace ComplianceFileDownloader.Downloaders;
 internal class ExampleDownloader
 {
     private string baseUrl;
@@ -76,7 +76,7 @@ and dt.CandidateTaskTypeId <> 3 and dt.CandidateTaskTypeId <> 8";
         csv.AppendLine("DocumentTypeId, DocumentTypeName, CategoryName, LOB, UsedInLast12Months, TaskType, DocumentId");
         foreach (var document in documents)
         {
-            if(File.Exists($"exampleDocs/{document.DocumentTypeId}.pdf"))
+            if (File.Exists($"exampleDocs/{document.DocumentTypeId}.pdf"))
             {
                 Directory.CreateDirectory("exampleDocs/Docsfiltered");
                 File.Copy($"exampleDocs/{document.DocumentTypeId}.pdf", $"exampleDocs/Docsfiltered/{document.DocumentTypeId}.pdf");

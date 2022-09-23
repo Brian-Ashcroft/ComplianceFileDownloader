@@ -11,6 +11,8 @@ internal record struct RubellaDoc
     public string FirstName { get; init; }
     public string LastName { get; init; }
     public DateTime? ExpirationDate { get; init; }
+    public string FacilityDescription { get; set; }
+    public string AssociationDescription { get; set; }
 }
 
 

@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ComplianceFileDownloader;
+namespace ComplianceFileDownloader.Downloaders;
 internal class CovidDownloader
 {
     private string baseUrl;
@@ -56,7 +56,7 @@ order by r.id desc";
                 if (docResult.IsSuccessStatusCode)
                 {
                     Directory.CreateDirectory("docs");
-                    using var fs = new FileStream($"docs/{document.DocumentId}-{ document.CandidateDocumentId}-{document.RequirementId}-{document.CandidateUserInfoId}.pdf", FileMode.Create, FileAccess.Write, FileShare.None);
+                    using var fs = new FileStream($"docs/{document.DocumentId}-{document.CandidateDocumentId}-{document.RequirementId}-{document.CandidateUserInfoId}.pdf", FileMode.Create, FileAccess.Write, FileShare.None);
                     await docResult.Content.CopyToAsync(fs);
                 }
                 else

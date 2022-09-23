@@ -1,5 +1,6 @@
 ﻿// See https://aka.ms/new-console-template for more information
 using ComplianceFileDownloader;
+using ComplianceFileDownloader.Downloaders;
 using System.Configuration;
 
 var userName = ConfigurationSettings.AppSettings.Get("username");

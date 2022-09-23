@@ -3,7 +3,7 @@ using Dapper;
 using System.Data.SqlClient;
 using System.Text;
 
-namespace ComplianceFileDownloader
+namespace ComplianceFileDownloader.Downloaders
 {
     internal class AclsDownloader
     {
@@ -116,7 +116,16 @@ namespace ComplianceFileDownloader
                 {
                     if (File.Exists($"acls_docs/{document.DocumentId}.pdf"))
                     {
-                        csv.AppendLine($"{document.DocumentTypeId}, {document.CandidateDocumentId}, {document.DocumentId}, {document.Status}, {Sanitze(document.Reason)}, {document.FirstName}, {document.LastName}, {document.ExpirationDate}, {Sanitze(document.FacilityDescription)}, {Sanitze(document.AssociationDescription)}, DUP");
+                        csv.AppendLine($"{document.DocumentTypeId}," +
+                            $" {document.CandidateDocumentId}," +
+                            $" {document.DocumentId}," +
+                            $" {document.Status}," +
+                            $" {Sanitze(document.Reason)}," +
+                            $" {document.FirstName}," +
+                            $" {document.LastName}," +
+                            $" {document.ExpirationDate}," +
+                            $" {Sanitze(document.FacilityDescription)}," +
+                            $" {Sanitze(document.AssociationDescription)}, DUP");
                         continue;
                     }
                     try
@@ -128,7 +137,16 @@ namespace ComplianceFileDownloader
                         var docResult = await request.SendAsync();
                         if (docResult.IsSuccessStatusCode)
                         {
-                            csv.AppendLine($"{document.DocumentTypeId}, {document.CandidateDocumentId}, {document.DocumentId}, {document.Status}, {Sanitze(document.Reason)}, {document.FirstName}, {document.LastName}, {document.ExpirationDate}, {Sanitze(document.FacilityDescription)}, {Sanitze(document.AssociationDescription)}");
+                            csv.AppendLine($"{document.DocumentTypeId}," +
+                                $" {document.CandidateDocumentId}," +
+                                $" {document.DocumentId}," +
+                                $" {document.Status}," +
+                                $" {Sanitze(document.Reason)}," +
+                                $" {document.FirstName}," +
+                                $" {document.LastName}," +
+                                $" {document.ExpirationDate}," +
+                                $" {Sanitze(document.FacilityDescription)}," +
+                                $" {Sanitze(document.AssociationDescription)}");
                             Directory.CreateDirectory("acls_docs");
                             using var fs = new FileStream($"acls_docs/{document.DocumentId}.pdf", FileMode.Create, FileAccess.Write, FileShare.None);
                             await docResult.Content.CopyToAsync(fs);
@@ -149,7 +167,7 @@ namespace ComplianceFileDownloader
 
         public string Sanitze(string s)
         {
-            if(s == null) return s;
+            if (s == null) return s;
 
             s = s.Replace(",", " ");
             s = s.Replace("\r", " ");

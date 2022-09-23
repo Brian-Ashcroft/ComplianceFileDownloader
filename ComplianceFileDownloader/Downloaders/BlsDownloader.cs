@@ -3,7 +3,7 @@ using Dapper;
 using System.Data.SqlClient;
 using System.Text;
 
-namespace ComplianceFileDownloader
+namespace ComplianceFileDownloader.Downloaders
 {
     internal class BlsDownloader
     {
