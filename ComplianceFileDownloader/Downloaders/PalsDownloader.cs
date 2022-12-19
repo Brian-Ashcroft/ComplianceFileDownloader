@@ -31,84 +31,138 @@ namespace ComplianceFileDownloader.Downloaders
             int fileCount;
             var queries = new List<queryDto>();
             queries.Add(new queryDto(750,
-                         @"SELECT distinct top 2000
-                            r.CandidateDocumentId
-                            ,DocumentTypeId
-                            ,d.Id DocumentId
-                            ,d.Path
-                            ,'Approved' as Status
-                            ,'' as Reason
-                            ,u.FirstName
-                            ,u.LastName
-                            ,r.ExpirationDate
-                            ,r.id
-		                    ,hdesc.comments as 'FacilityDescription'
-		                    ,adesc.comments as 'AssociationDescription'
-                            FROM nurses.compliance.requirements r
-                            JOIN nurses.compliance.candidatedocuments cd on r.CandidateDocumentId = cd.Id
-                            JOIN nurses.documents.Documents d on cd.DocumentId = d.Id
-                            JOIN nurses.dbo.UserInfo u on u.userid = cd.candidateuserinfoid
-		                    LEFT JOIN [nurses].dbo.contractinfo ci on r.contractid = ci.contractid
-		                    LEFT JOIN [nurses].dbo.hospQMrequire hdesc on ci.hospid = hdesc.hospid AND hdesc.docid = @DocumentTypeId
-		                    LEFT JOIN [nurses].dbo.facilityprofiles fp on fp.id = ci.hospid
-		                    LEFT JOIN [nurses].dbo.hospQMrequire adesc on adesc.associationid = fp.qmsystemcode AND adesc.docid = @DocumentTypeId
-                            WHERE DocumentTypeId = @DocumentTypeId
-                            AND ValidationStatusId = 2
-                            order by r.id desc"));
+                         @"SELECT DISTINCT TOP 2000
+	                            r.CandidateDocumentId
+                               ,r.DocumentTypeId
+                               ,d.Id DocumentId
+                               ,d.Path
+                               ,'Approved' AS Status
+                               ,'' AS Reason
+                               ,u.FirstName
+                               ,u.LastName
+                               ,r.ExpirationDate
+                               ,r.Id
+                               ,fdtd.[Description] AS 'FacilityDescription'
+                               ,adtd.[Description] AS 'AssociationDescription'
 
-            queries.Add(new queryDto(125,
-                        @"SELECT distinct TOP 500 
-                            r.CandidateDocumentId
-                            ,r.DocumentTypeId
-                            ,d.Id DocumentId
-                            ,d.Path
-                            ,'Declined' As Status
-                            ,rdn.Note as Reason
-                            ,u.FirstName
-                            ,u.LastName
-                            ,r.ExpirationDate
-                            ,rdn.id
-		                    ,hdesc.comments as 'FacilityDescription'
-		                    ,adesc.comments as 'AssociationDescription'
-                            FROM [nurses].[Compliance].[RequirementDeclinedNotes] rdn
-                            JOIN [nurses].[Compliance].[Requirements] r ON r.Id = rdn.RequirementId and rdn.candidatedocumentid = r.candidatedocumentid
-                            JOIN [nurses].[Compliance].[CandidateDocuments] cd ON cd.Id = r.CandidateDocumentId
-                            JOIN [nurses].[Documents].[Documents] d ON d.Id = cd.DocumentId
-                            JOIN [nurses].[dbo].[UserInfo] u on u.userid = cd.candidateuserinfoid
-		                    LEFT JOIN [nurses].dbo.contractinfo ci on r.contractid = ci.contractid
-		                    LEFT JOIN [nurses].dbo.hospQMrequire hdesc on ci.hospid = hdesc.hospid AND hdesc.docid = @DocumentTypeId
-		                    LEFT JOIN [nurses].dbo.facilityprofiles fp on fp.id = ci.hospid
-		                    LEFT JOIN [nurses].dbo.hospQMrequire adesc on adesc.associationid = fp.qmsystemcode AND adesc.docid = @DocumentTypeId
+                            FROM nurses.Compliance.Requirements r
+                            JOIN nurses.Compliance.CandidateDocuments cd
+	                            ON r.CandidateDocumentId = cd.Id
+                            JOIN nurses.Documents.Documents d
+	                            ON cd.DocumentId = d.Id
+                            JOIN nurses.dbo.UserInfo u
+	                            ON u.userID = cd.CandidateUserInfoId
+                            LEFT JOIN [nurses].dbo.ContractInfo ci
+	                            ON r.ContractId = ci.ContractId
+                            LEFT JOIN nurses.Compliance.DocumentTypeConfigurations fdtc
+	                            ON fdtc.DocumentTypeId = @DocumentTypeId
+		                            AND ci.hospID = fdtc.FacilityId
+		                            AND fdtc.DocumentTypeDescriptionTypesId = 0 --internaldesc = 0
+                            LEFT JOIN nurses.Compliance.DocumentTypeDescriptions fdtd
+	                            ON fdtd.DocumentTypeDescriptionId = fdtc.DocumentTypeDescriptionId
+                            LEFT JOIN [nurses].dbo.FacilityProfiles fp
+	                            ON fp.Id = ci.hospID
+                            LEFT JOIN nurses.Compliance.DocumentTypeConfigurations adtc
+	                            ON adtc.DocumentTypeId = @DocumentTypeId
+		                            AND fp.QMSystemCode = adtc.QmAssoicationId
+		                            AND adtc.DocumentTypeDescriptionTypesId = 0 --internaldesc = 0
+                            LEFT JOIN nurses.Compliance.DocumentTypeDescriptions adtd
+	                            ON adtd.DocumentTypeDescriptionId = adtc.DocumentTypeDescriptionId
+
                             WHERE r.DocumentTypeId = @DocumentTypeId
-                            ORDER BY rdn.Id desc"));
+                            AND ValidationStatusId = 2
+                            ORDER BY r.Id DESC"));
 
             queries.Add(new queryDto(125,
-                        @"SELECT distinct TOP 500 
-                            cd.Id CandidateDocumentId
-                            ,crp.DocumentTypeId
-                            ,d.Id DocumentId
-                            ,d.Path
-                            ,'Rejected' As Status
-                            ,cdn.Note as Reason
-                            ,u.FirstName
-                            ,u.LastName
-                            ,r.ExpirationDate
-                            ,cdn.id
-			                ,hdesc.comments as 'FacilityDescription'
-			                ,adesc.comments as 'AssociationDescription'
+                        @"SELECT DISTINCT TOP 500
+	                            r.CandidateDocumentId
+                               ,r.DocumentTypeId
+                               ,d.Id DocumentId
+                               ,d.Path
+                               ,'Declined' AS Status
+                               ,rdn.Note AS Reason
+                               ,u.FirstName
+                               ,u.LastName
+                               ,r.ExpirationDate
+                               ,rdn.Id
+                               ,fdtd.[Description] AS 'FacilityDescription'
+                               ,adtd.[Description] AS 'AssociationDescription'
+                            FROM [nurses].[Compliance].[RequirementDeclinedNotes] rdn
+                            JOIN [nurses].[Compliance].[Requirements] r
+	                            ON r.Id = rdn.RequirementId
+		                            AND rdn.CandidateDocumentId = r.CandidateDocumentId
+                            JOIN [nurses].[Compliance].[CandidateDocuments] cd
+	                            ON cd.Id = r.CandidateDocumentId
+                            JOIN [nurses].[Documents].[Documents] d
+	                            ON d.Id = cd.DocumentId
+                            JOIN [nurses].[dbo].[UserInfo] u
+	                            ON u.UserID = cd.CandidateUserInfoId
+                            LEFT JOIN [nurses].dbo.ContractInfo ci
+	                            ON r.contractid = ci.contractid
+                            LEFT JOIN nurses.Compliance.DocumentTypeConfigurations fdtc
+	                            ON fdtc.DocumentTypeId = @DocumentTypeId
+		                            AND ci.hospID = fdtc.FacilityId
+		                            AND fdtc.DocumentTypeDescriptionTypesId = 0 --internaldesc = 0
+                            LEFT JOIN nurses.Compliance.DocumentTypeDescriptions fdtd
+	                            ON fdtd.DocumentTypeDescriptionId = fdtc.DocumentTypeDescriptionId
+                            LEFT JOIN [nurses].dbo.FacilityProfiles fp
+	                            ON fp.Id = ci.hospID
+                            LEFT JOIN nurses.Compliance.DocumentTypeConfigurations adtc
+	                            ON adtc.DocumentTypeId = @DocumentTypeId
+		                            AND fp.QMSystemCode = adtc.QmAssoicationId
+		                            AND adtc.DocumentTypeDescriptionTypesId = 0 --internaldesc = 0
+                            LEFT JOIN nurses.Compliance.DocumentTypeDescriptions adtd
+	                            ON adtd.DocumentTypeDescriptionId = adtc.DocumentTypeDescriptionId
+                            WHERE r.DocumentTypeId = @DocumentTypeId
+                            ORDER BY rdn.Id DESC"));
+
+            queries.Add(new queryDto(125,
+                        @"SELECT DISTINCT TOP 500
+	                            cd.Id CandidateDocumentId
+                               ,crp.DocumentTypeId
+                               ,d.Id DocumentId
+                               ,d.Path
+                               ,'Rejected' AS Status
+                               ,cdn.Note AS Reason
+                               ,u.FirstName
+                               ,u.LastName
+                               ,r.ExpirationDate
+                               ,cdn.Id
+                               ,fdtd.[Description] AS 'FacilityDescription'
+                               ,adtd.[Description] AS 'AssociationDescription'
                             FROM [nurses].[Compliance].[CandidateDocumentNotes] cdn
-                            JOIN (SELECT distinct CandidateDocumentId, DocumentTypeId FROM nurses.compliance.candidatedocumentrejectedpages) crp ON cdn.CandidateDocumentId = crp.CandidateDocumentId
-                            JOIN [nurses].[Compliance].[CandidateDocuments] cd ON cd.Id = cdn.CandidateDocumentId
-                            JOIN [nurses].[Documents].[Documents] d ON d.Id = cd.DocumentId
-                            JOIN [nurses].[dbo].[UserInfo] u on u.userid = cd.candidateuserinfoid
-                            LEFT JOIN [nurses].[compliance].[requirements] r on r.CandidateDocumentId = cd.Id
-			                LEFT JOIN nurses.dbo.contractinfo ci on r.contractid = ci.contractid
-			                LEFT JOIN nurses.dbo.hospQMrequire hdesc on ci.hospid = hdesc.hospid AND hdesc.docid = @DocumentTypeId
-			                LEFT JOIN nurses.dbo.facilityprofiles fp on fp.id = ci.hospid
-			                LEFT JOIN nurses.dbo.hospQMrequire adesc on adesc.associationid = fp.qmsystemcode AND adesc.docid = @DocumentTypeId
+                            JOIN (SELECT DISTINCT
+		                            CandidateDocumentId
+	                               ,DocumentTypeId
+	                            FROM nurses.Compliance.CandidateDocumentRejectedPages) crp
+	                            ON cdn.CandidateDocumentId = crp.CandidateDocumentId
+                            JOIN [nurses].[Compliance].[CandidateDocuments] cd
+	                            ON cd.Id = cdn.CandidateDocumentId
+                            JOIN [nurses].[Documents].[Documents] d
+	                            ON d.Id = cd.DocumentId
+                            JOIN [nurses].[dbo].[UserInfo] u
+	                            ON u.UserID = cd.CandidateUserInfoId
+                            LEFT JOIN [nurses].[Compliance].[Requirements] r
+	                            ON r.CandidateDocumentId = cd.Id
+                            LEFT JOIN nurses.dbo.ContractInfo ci
+	                            ON r.contractid = ci.contractid
+                            LEFT JOIN nurses.Compliance.DocumentTypeConfigurations fdtc
+	                            ON fdtc.DocumentTypeId = @DocumentTypeId
+		                            AND ci.hospID = fdtc.FacilityId
+		                            AND fdtc.DocumentTypeDescriptionTypesId = 0 --internaldesc = 0
+                            LEFT JOIN nurses.Compliance.DocumentTypeDescriptions fdtd
+	                            ON fdtd.DocumentTypeDescriptionId = fdtc.DocumentTypeDescriptionId
+                            LEFT JOIN [nurses].dbo.FacilityProfiles fp
+	                            ON fp.Id = ci.hospID
+                            LEFT JOIN nurses.Compliance.DocumentTypeConfigurations adtc
+	                            ON adtc.DocumentTypeId = @DocumentTypeId
+		                            AND fp.QmSystemCode = adtc.QmAssoicationId
+		                            AND adtc.DocumentTypeDescriptionTypesId = 0 --internaldesc = 0
+                            LEFT JOIN nurses.Compliance.DocumentTypeDescriptions adtd
+	                            ON adtd.DocumentTypeDescriptionId = adtc.DocumentTypeDescriptionId
                             WHERE crp.DocumentTypeId = @DocumentTypeId
-                            and cdn.TypeId = 1
-                            ORDER BY cdn.Id desc"));
+                            AND cdn.TypeId = 1
+                            ORDER BY cdn.Id DESC"));
 
             using var connection = new SqlConnection(connectionString);
             var parameters = new { DocumentTypeId = palsId };
