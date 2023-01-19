@@ -5,14 +5,14 @@ using System.Text;
 
 namespace ComplianceFileDownloader.Downloaders
 {
-    internal class PalsDownloader
+    internal class CovidDose2Downloader
     {
-        private static int documentTypeId = 16;
+        private static int documentTypeId = 29544;
         private string baseUrl;
         private string userName;
         private string password;
         private string connectionString;
-        public PalsDownloader(string baseUrl, string userName, string password, string connectionString)
+        public CovidDose2Downloader(string baseUrl, string userName, string password, string connectionString)
         {
             this.baseUrl = baseUrl;
             this.userName = userName;
@@ -168,7 +168,7 @@ namespace ComplianceFileDownloader.Downloaders
             var parameters = new { DocumentTypeId = documentTypeId };
             foreach (var query in queries)
             {
-                var result = await connection.QueryAsync<PalsDoc>(query.Sql, parameters);
+                var result = await connection.QueryAsync<CovidDose2Doc>(query.Sql, parameters);
                 var documents = result.ToList();
                 var token = await HttpRequestFactory.GetApiToken(userName, password, tokenUrl);
                 fileCount = 0;
@@ -177,7 +177,7 @@ namespace ComplianceFileDownloader.Downloaders
                 {
                     if(fileCount >= query.Count) break;
 
-                    if (File.Exists($"pals_docs/{document.DocumentId}.pdf"))
+                    if (File.Exists($"CovidDose2_docs/{document.DocumentId}.pdf"))
                     {
                         csv.AppendLine($"{document.DocumentTypeId}," +
                             $" {document.CandidateDocumentId}," +
@@ -210,8 +210,8 @@ namespace ComplianceFileDownloader.Downloaders
                                 $" {document.ExpirationDate}," +
                                 $" {Sanitze(document.FacilityDescription)}," +
                                 $" {Sanitze(document.AssociationDescription)}");
-                            Directory.CreateDirectory("pals_docs");
-                            using var fs = new FileStream($"pals_docs/{document.DocumentId}.pdf", FileMode.Create, FileAccess.Write, FileShare.None);
+                            Directory.CreateDirectory("CovidDose2_docs");
+                            using var fs = new FileStream($"CovidDose2_docs/{document.DocumentId}.pdf", FileMode.Create, FileAccess.Write, FileShare.None);
                             await docResult.Content.CopyToAsync(fs);
                             fileCount++;
                         }
@@ -229,7 +229,7 @@ namespace ComplianceFileDownloader.Downloaders
 
 
             }
-            File.WriteAllText("pals_docs.csv", csv.ToString());
+            File.WriteAllText("CovidDose2_docs.csv", csv.ToString());
         }
 
         public string Sanitze(string s)

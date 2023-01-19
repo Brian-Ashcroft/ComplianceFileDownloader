@@ -5,14 +5,13 @@ using System.Text;
 
 namespace ComplianceFileDownloader.Downloaders
 {
-    internal class PalsDownloader
+    internal class DriversLicenseDownloader
     {
-        private static int documentTypeId = 16;
         private string baseUrl;
         private string userName;
         private string password;
         private string connectionString;
-        public PalsDownloader(string baseUrl, string userName, string password, string connectionString)
+        public DriversLicenseDownloader(string baseUrl, string userName, string password, string connectionString)
         {
             this.baseUrl = baseUrl;
             this.userName = userName;
@@ -25,13 +24,15 @@ namespace ComplianceFileDownloader.Downloaders
             var downloadDocUrl = baseUrl + "ayanova/documents/";
 
             var csv = new StringBuilder();
-            csv.AppendLine("DocumentTypeId, CandidateDocumentId, DocumentId, Status, Reason, FirstName, LastName, ExpirationDate, FacilityDescription, AssociationDescription");
+            csv.AppendLine("DocumentTypeId, CandidateDocumentId, DocumentId, Status, Reason, FirstName, LastName, ExpirationDate, FacilityDescription, AssociationDescription, StateCode, State");
+
+            var driversLicenseId = 5;
 
             int fileCount;
             var queries = new List<queryDto>
             {
                 new queryDto(750,
-                    @"SELECT DISTINCT TOP 2000
+					@"SELECT TOP 2000
 	                    r.CandidateDocumentId
                         ,r.DocumentTypeId
                         ,d.Id DocumentId
@@ -44,6 +45,8 @@ namespace ComplianceFileDownloader.Downloaders
                         ,r.Id
                         ,fdtd.[Description] AS 'FacilityDescription'
                         ,adtd.[Description] AS 'AssociationDescription'
+	                    ,s.Code AS 'StateCode'
+	                    ,s.Name AS 'State'
                     FROM nurses.Compliance.Requirements r
                     JOIN nurses.Compliance.CandidateDocuments cd
 	                    ON r.CandidateDocumentId = cd.Id
@@ -67,13 +70,17 @@ namespace ComplianceFileDownloader.Downloaders
 		                    AND adtc.DocumentTypeDescriptionTypesId = 0 --internaldesc = 0
                     LEFT JOIN nurses.Compliance.DocumentTypeDescriptions adtd
 	                    ON adtd.DocumentTypeDescriptionId = adtc.DocumentTypeDescriptionId
-
+                    JOIN nurses.Candidate.Candidates c
+	                    ON c.UserID = cd.CandidateUserInfoId
+                    JOIN Global.States s
+		                    ON s.Id = c.StateCode
                     WHERE r.DocumentTypeId = @DocumentTypeId
-                    AND ValidationStatusId = 2
-                    ORDER BY r.Id DESC"),
-
+                        AND ValidationStatusId = 2
+	                    AND s.CountryId = 1
+	                    AND NULLIF(s.Code, '') IS NOT NULL
+                    ORDER BY ROW_NUMBER() OVER (PARTITION BY c.StateCode ORDER BY r.Id DESC)"),
                 new queryDto(125,
-                    @"SELECT DISTINCT TOP 500
+					@"SELECT TOP 500
 	                    r.CandidateDocumentId
                         ,r.DocumentTypeId
                         ,d.Id DocumentId
@@ -86,6 +93,8 @@ namespace ComplianceFileDownloader.Downloaders
                         ,rdn.Id
                         ,fdtd.[Description] AS 'FacilityDescription'
                         ,adtd.[Description] AS 'AssociationDescription'
+	                    ,s.Code AS 'StateCode'
+	                    ,s.Name AS 'State'
                     FROM [nurses].[Compliance].[RequirementDeclinedNotes] rdn
                     JOIN [nurses].[Compliance].[Requirements] r
 	                    ON r.Id = rdn.RequirementId
@@ -112,11 +121,16 @@ namespace ComplianceFileDownloader.Downloaders
 		                    AND adtc.DocumentTypeDescriptionTypesId = 0 --internaldesc = 0
                     LEFT JOIN nurses.Compliance.DocumentTypeDescriptions adtd
 	                    ON adtd.DocumentTypeDescriptionId = adtc.DocumentTypeDescriptionId
+					JOIN nurses.Candidate.Candidates c
+						ON c.UserID = cd.CandidateUserInfoId
+					JOIN Global.States s
+							ON s.Id = c.StateCode
                     WHERE r.DocumentTypeId = @DocumentTypeId
-                    ORDER BY rdn.Id DESC"),
-
+						AND s.CountryId = 1
+						AND NULLIF(s.Code, '') IS NOT NULL
+					ORDER BY ROW_NUMBER() OVER (PARTITION BY c.StateCode ORDER BY r.Id DESC)"),
                 new queryDto(125,
-                    @"SELECT DISTINCT TOP 500
+					@"SELECT TOP 500
 	                    cd.Id CandidateDocumentId
                         ,crp.DocumentTypeId
                         ,d.Id DocumentId
@@ -129,6 +143,8 @@ namespace ComplianceFileDownloader.Downloaders
                         ,cdn.Id
                         ,fdtd.[Description] AS 'FacilityDescription'
                         ,adtd.[Description] AS 'AssociationDescription'
+	                    ,s.Code AS 'StateCode'
+	                    ,s.Name AS 'State'
                     FROM [nurses].[Compliance].[CandidateDocumentNotes] cdn
                     JOIN (SELECT DISTINCT
 		                    CandidateDocumentId
@@ -159,16 +175,22 @@ namespace ComplianceFileDownloader.Downloaders
 		                    AND adtc.DocumentTypeDescriptionTypesId = 0 --internaldesc = 0
                     LEFT JOIN nurses.Compliance.DocumentTypeDescriptions adtd
 	                    ON adtd.DocumentTypeDescriptionId = adtc.DocumentTypeDescriptionId
+					JOIN nurses.Candidate.Candidates c
+						ON c.UserID = cd.CandidateUserInfoId
+					JOIN Global.States s
+							ON s.Id = c.StateCode
                     WHERE crp.DocumentTypeId = @DocumentTypeId
-                    AND cdn.TypeId = 1
-                    ORDER BY cdn.Id DESC")
+                        AND cdn.TypeId = 1
+						AND s.CountryId = 1
+						AND NULLIF(s.Code, '') IS NOT NULL
+					ORDER BY ROW_NUMBER() OVER (PARTITION BY c.StateCode ORDER BY r.Id DESC)")
             };
 
             using var connection = new SqlConnection(connectionString);
-            var parameters = new { DocumentTypeId = documentTypeId };
+            var parameters = new { DocumentTypeId = driversLicenseId };
             foreach (var query in queries)
             {
-                var result = await connection.QueryAsync<PalsDoc>(query.Sql, parameters);
+                var result = await connection.QueryAsync<DriversLicenseDoc>(query.Sql, parameters);
                 var documents = result.ToList();
                 var token = await HttpRequestFactory.GetApiToken(userName, password, tokenUrl);
                 fileCount = 0;
@@ -177,7 +199,7 @@ namespace ComplianceFileDownloader.Downloaders
                 {
                     if(fileCount >= query.Count) break;
 
-                    if (File.Exists($"pals_docs/{document.DocumentId}.pdf"))
+                    if (File.Exists($"drivers_license_docs/{document.StateCode}_{document.DocumentId}.pdf"))
                     {
                         csv.AppendLine($"{document.DocumentTypeId}," +
                             $" {document.CandidateDocumentId}," +
@@ -188,7 +210,10 @@ namespace ComplianceFileDownloader.Downloaders
                             $" {document.LastName}," +
                             $" {document.ExpirationDate}," +
                             $" {Sanitze(document.FacilityDescription)}," +
-                            $" {Sanitze(document.AssociationDescription)}, DUP");
+                            $" {Sanitze(document.AssociationDescription)}," +
+                            $" {document.StateCode}," +
+                            $" {document.State}, " +
+                            "DUP");
                         continue;
                     }
                     try
@@ -209,9 +234,11 @@ namespace ComplianceFileDownloader.Downloaders
                                 $" {document.LastName}," +
                                 $" {document.ExpirationDate}," +
                                 $" {Sanitze(document.FacilityDescription)}," +
-                                $" {Sanitze(document.AssociationDescription)}");
-                            Directory.CreateDirectory("pals_docs");
-                            using var fs = new FileStream($"pals_docs/{document.DocumentId}.pdf", FileMode.Create, FileAccess.Write, FileShare.None);
+                                $" {Sanitze(document.AssociationDescription)}," +
+							    $" {document.StateCode}," +
+							    $" {document.State}");
+                            Directory.CreateDirectory("drivers_license_docs");
+                            using var fs = new FileStream($"drivers_license_docs/{document.StateCode}_{document.DocumentId}.pdf", FileMode.Create, FileAccess.Write, FileShare.None);
                             await docResult.Content.CopyToAsync(fs);
                             fileCount++;
                         }
@@ -229,7 +256,7 @@ namespace ComplianceFileDownloader.Downloaders
 
 
             }
-            File.WriteAllText("pals_docs.csv", csv.ToString());
+            File.WriteAllText("drivers_license_docs.csv", csv.ToString());
         }
 
         public string Sanitze(string s)

@@ -64,7 +64,7 @@ namespace ComplianceFileDownloader.Downloaders
 	                            ON fp.Id = ci.hospID
                             LEFT JOIN nurses.Compliance.DocumentTypeConfigurations adtc
 	                            ON adtc.DocumentTypeId = @DocumentTypeId
-		                            AND fp.QMSystemCode = adtc.QmAssoicationId
+		                            AND fp.QMSystemCode = adtc.QmAssociationId
 		                            AND adtc.DocumentTypeDescriptionTypesId = 0 --internaldesc = 0
                             LEFT JOIN nurses.Compliance.DocumentTypeDescriptions adtd
 	                            ON adtd.DocumentTypeDescriptionId = adtc.DocumentTypeDescriptionId
@@ -109,7 +109,7 @@ namespace ComplianceFileDownloader.Downloaders
 	                            ON fp.Id = ci.hospID
                             LEFT JOIN nurses.Compliance.DocumentTypeConfigurations adtc
 	                            ON adtc.DocumentTypeId = @DocumentTypeId
-		                            AND fp.QMSystemCode = adtc.QmAssoicationId
+		                            AND fp.QMSystemCode = adtc.QmAssociationId
 		                            AND adtc.DocumentTypeDescriptionTypesId = 0 --internaldesc = 0
                             LEFT JOIN nurses.Compliance.DocumentTypeDescriptions adtd
 	                            ON adtd.DocumentTypeDescriptionId = adtc.DocumentTypeDescriptionId
@@ -156,7 +156,7 @@ namespace ComplianceFileDownloader.Downloaders
 	                            ON fp.Id = ci.hospID
                             LEFT JOIN nurses.Compliance.DocumentTypeConfigurations adtc
 	                            ON adtc.DocumentTypeId = @DocumentTypeId
-		                            AND fp.QmSystemCode = adtc.QmAssoicationId
+		                            AND fp.QmSystemCode = adtc.QmAssociationId
 		                            AND adtc.DocumentTypeDescriptionTypesId = 0 --internaldesc = 0
                             LEFT JOIN nurses.Compliance.DocumentTypeDescriptions adtd
 	                            ON adtd.DocumentTypeDescriptionId = adtc.DocumentTypeDescriptionId
