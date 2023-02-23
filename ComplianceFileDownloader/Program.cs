@@ -21,14 +21,17 @@ var connectionString = ConfigurationSettings.AppSettings.Get("connectionString")
 //var covidBoosterDownloader = new CovidBoosterDownloader(baseUrl, userName, password, connectionString);
 //await covidBoosterDownloader.Execute();
 
-var covidDose1Downloader = new CovidDose1Downloader(baseUrl, userName, password, connectionString);
-await covidDose1Downloader.Execute();
+//var covidDose1Downloader = new CovidDose1Downloader(baseUrl, userName, password, connectionString);
+//await covidDose1Downloader.Execute();
 
 //var covidDose2Downloader = new CovidDose2Downloader(baseUrl, userName, password, connectionString);
 //await covidDose2Downloader.Execute();
 
 //var driversLicenseDownloader = new DriversLicenseDownloader(baseUrl, userName, password, connectionString);
 //await driversLicenseDownloader.Execute();
+
+//var fluVaccineDownloader = new FluVaccineDownloader(baseUrl, userName, password, connectionString);
+//await fluVaccineDownloader.Execute();
 
 //var palsDownloader = new PalsDownloader(baseUrl, userName, password, connectionString);
 //await palsDownloader.Execute();
@@ -38,4 +41,7 @@ await covidDose1Downloader.Execute();
 
 //var rubellaDownloader = new RubellaDownloader(baseUrl, userName, password, connectionString);
 //await rubellaDownloader.Execute();
+
+var tdapDownloader = new TdapDownloader(baseUrl, userName, password, connectionString);
+await tdapDownloader.Execute();
 
