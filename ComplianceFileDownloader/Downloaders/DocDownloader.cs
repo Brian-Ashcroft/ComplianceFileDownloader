@@ -209,6 +209,7 @@ namespace ComplianceFileDownloader.Downloaders
                     catch (Exception ex)
                     {
                         Console.WriteLine(document.DocumentId + " " + ex.ToString());
+                        continue;
                     }
                 }
 
